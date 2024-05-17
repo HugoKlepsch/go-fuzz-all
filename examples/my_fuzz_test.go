@@ -1,6 +1,7 @@
 package examples
 
 import (
+	"github.com/hugoklepsch/go-fuzz-struct/fuzzing"
 	"testing"
 	"unicode/utf8"
 )
@@ -16,14 +17,20 @@ func FuzzFunctionToTestBasicTypes(f *testing.F) {
 }
 
 type MyStruct struct {
-	s string
-	b bool
-	i int
-	f float64
+	S string
+	B bool
+	I int
+	F float64
 }
 
 func FunctionToTestStruct(m MyStruct) bool {
-	return (utf8.ValidString(m.s) && m.b) || (m.i > 0 && m.f < 0)
+	return (utf8.ValidString(m.S) && m.B) || (m.I > 0 && m.F < 0)
+}
+
+func FunctionToTestPanics(m MyStruct) {
+	if m.F < 0.1 && m.F > 0.099 {
+		panic("uh oh")
+	}
 }
 
 func FuzzFunctionToTestStruct_NotWorking(f *testing.F) {
@@ -34,19 +41,22 @@ func FuzzFunctionToTestStruct_NotWorking(f *testing.F) {
 	})
 }
 
-func FuzzFunctionToTestStruct_GeneratedFuzzTarget(f *testing.F) {
+func FuzzFunctionToTestStruct_NotWorking2(f *testing.F) {
 	// Does not work:
 	// panic: testing: unsupported type for fuzzing examples.MyStruct
-	/* TODO:
-	ex1 := MyStruct{i: 42}
-	ex2 := MyStruct{f: 42.0}
+	f.Add("foo", false, 42, 42.0)
+	f.Fuzz(func(t *testing.T, args ...any) {
+		FunctionToTestStruct(MyStruct{S: args[0].(string), B: args[1].(bool), I: args[2].(int), F: args[3].(float64)})
+	})
+}
 
-	addArguments := GenerateCorpus(ex1)
-	f.Add(addArguments...)
-	addArguments = GenerateCorpus(ex2)
-	f.Add(addArguments...)
-
-	fuzz_target := GenerateFuzzTarget[MyStruct](func(t *testing.T, m MyStruct){})
-	f.Fuzz(fuzz_target)
-	*/
+func FuzzFunctionToTestStruct_GeneratedFuzzTarget(f *testing.F) {
+	ex1 := MyStruct{I: 42}
+	ex2 := MyStruct{F: 42.0}
+	fuzzing.Add(f, ex1)
+	fuzzing.Add(f, ex2)
+	fuzzing.FuzzStruct(f, func(t *testing.T, m MyStruct) {
+		t.Logf("%v", m)
+		FunctionToTestStruct(m)
+	})
 }
