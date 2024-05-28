@@ -5,7 +5,18 @@ import (
 	"testing"
 )
 
-func Add[T any](f *testing.F, t T) {
+//go:generate mockgen -destination ../internal/mocks/testinlFMock.go -package mocks github.com/hugoklepsch/go-fuzz-all/fuzzing TestingF
+type TestingF interface {
+	Add(...any)
+	Fuzz(any)
+}
+
+//go:generate mockgen -destination ../internal/mocks/testingTMock.go -package mocks github.com/hugoklepsch/go-fuzz-all/fuzzing TestingT
+type TestingT interface {
+	testing.TB
+}
+
+func Add[T any](f TestingF, t T) {
 	tValue := reflect.ValueOf(t)
 	tType := tValue.Type()
 	if tType.Kind() != reflect.Struct {
@@ -15,13 +26,32 @@ func Add[T any](f *testing.F, t T) {
 	fieldValues := []any{}
 	fields := structToFields[T]()
 	for _, field := range fields {
-		fieldValue := tValue.FieldByIndex(field.Path)
-		fieldValues = append(fieldValues, fieldValue.Interface())
+		switch field.Type.Kind() {
+		case reflect.Pointer:
+			// If it is a pointer, let's add a boolean to represent whether the pointer is nil or not. If the Go Fuzz
+			// framework passes in false for the boolean, we will provide nil for the value. If it is true, we will
+			// provide a value for the pointer.
+			fieldValue := tValue.FieldByIndex(field.Path)
+
+			// If the provided value is nil, seed the corpus of the boolean with false.
+			isPointerSet := fieldValue.IsNil()
+			isPointerSetValue := reflect.ValueOf(isPointerSet)
+
+			fieldValues = append(fieldValues, isPointerSetValue.Interface())
+			// TODO: work with pointers to complex types that need recursion. Think "pointer to struct".
+			// Add the zero value of the type that was pointed to -- NOT the pointer.
+			fieldValues = append(fieldValues, reflect.Zero(fieldValue.Type()))
+			break
+		default:
+			fieldValue := tValue.FieldByIndex(field.Path)
+			fieldValues = append(fieldValues, fieldValue.Interface())
+			break
+		}
 	}
 	f.Add(fieldValues...)
 }
 
-func FuzzStruct[T any](f *testing.F, fn func(*testing.T, T)) {
+func Fuzz[T any](f TestingF, fn func(*testing.T, T)) {
 	in := []reflect.Type{
 		reflect.TypeFor[*testing.T](),
 	}
