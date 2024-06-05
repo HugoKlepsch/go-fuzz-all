@@ -103,12 +103,13 @@ func TraverseType(v interface{}, visitor typeVisitor) {
 // traverseValue will recursively traverse any Go value. Does not traverse inside collection types like Array, Map,
 // Slice, Chan. It will simply visit those nodes. The visitor may implement their own traversal.
 func traverseValue(v interface{}, visitor anyVisitor) {
+	vType := reflect.TypeOf(v)
 	vValue := reflect.ValueOf(v)
-	traverseValueRecursive(vValue, visitor, path{})
+	traverseValueRecursive(vType, vValue, visitor, path{})
 }
 
-func traverseValueRecursive(v reflect.Value, visitor anyVisitor, pather path) {
-	switch v.Kind() {
+func traverseValueRecursive(t reflect.Type, v reflect.Value, visitor anyVisitor, pather path) {
+	switch t.Kind() {
 	case reflect.Bool:
 		visitor.VisitBool(v, pather)
 		break
@@ -157,7 +158,8 @@ func traverseValueRecursive(v reflect.Value, visitor anyVisitor, pather path) {
 		break
 	case reflect.Interface:
 		visitor.VisitInterface(v, pather)
-		traverseValueRecursive(v.Elem(), visitor, pather.visitChild(0, "Elem()"))
+		// Can't know what reflect.Type to use
+		traverseValueRecursive(nil, v.Elem(), visitor, pather.visitChild(0, "Elem()"))
 		break
 	case reflect.Map:
 		visitor.VisitMap(v, pather)
@@ -166,7 +168,7 @@ func traverseValueRecursive(v reflect.Value, visitor anyVisitor, pather path) {
 		visitor.VisitPointer(v, pather)
 		isPointerSet := !v.IsNil()
 		if isPointerSet {
-			traverseValueRecursive(v.Elem(), visitor, pather.visitChild(0, "*"))
+			traverseValueRecursive(t.Elem(), v.Elem(), visitor, pather.visitChild(0, "*"))
 		}
 		break
 	case reflect.Slice:
@@ -179,12 +181,13 @@ func traverseValueRecursive(v reflect.Value, visitor anyVisitor, pather path) {
 		visitor.VisitStruct(v, pather)
 		for i := 0; i < v.NumField(); i++ {
 			viValue := v.Field(i)
-			traverseValueRecursive(viValue, visitor, pather.visitChild(i, viValue.Type().Name()))
+			traverseValueRecursive(viValue.Type(), viValue, visitor, pather.visitChild(i, viValue.Type().Name()))
 		}
 		break
 	case reflect.UnsafePointer:
 		visitor.VisitUnsafePointer(v, pather)
-		traverseValueRecursive(v.Elem(), visitor, pather.visitChild(0, "unsafe *"))
+		// I don't think you can traverse into an unsafe pointer.
+		//traverseValueRecursive(v.Elem(), visitor, pather.visitChild(0, "unsafe *"))
 		break
 	default:
 		panic(v.Kind())
