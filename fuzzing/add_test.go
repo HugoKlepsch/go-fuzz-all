@@ -1,4 +1,4 @@
-package fuzzing2
+package fuzzing
 
 import (
 	"github.com/hugoklepsch/go-fuzz-all/internal/mocks"
@@ -25,7 +25,7 @@ func TestAdd2Struct_NoNesting_NoPtrs(t *testing.T) {
 
 	mockF.EXPECT().Add("foo", true, 42, 3.14)
 
-	Add2(mockF, f1)
+	Add(mockF, f1)
 }
 
 func TestAdd2Struct_NoNesting_Ptrs(t *testing.T) {
@@ -43,7 +43,7 @@ func TestAdd2Struct_NoNesting_Ptrs(t *testing.T) {
 
 	mockF.EXPECT().Add(true, "foo", true, true, true, 42, true, 3.14)
 
-	Add2(mockF, f1)
+	Add(mockF, f1)
 }
 
 func TestAdd2Struct_NoNesting_PtrsWithNil(t *testing.T) {
@@ -61,7 +61,7 @@ func TestAdd2Struct_NoNesting_PtrsWithNil(t *testing.T) {
 
 	mockF.EXPECT().Add(false, "", false, false, false, 0, false, 0.0)
 
-	Add2(mockF, f1)
+	Add(mockF, f1)
 }
 
 func TestAdd2Struct_Nesting_PtrsWithNil(t *testing.T) {
@@ -89,5 +89,5 @@ func TestAdd2Struct_Nesting_PtrsWithNil(t *testing.T) {
 		false, 0.0,
 		true, true, float32(3.14), true, complex64(12))
 
-	Add2(mockF, f1)
+	Add(mockF, f1)
 }

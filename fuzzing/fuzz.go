@@ -1,13 +1,12 @@
-package fuzzing2
+package fuzzing
 
 import (
 	"fmt"
-	"github.com/hugoklepsch/go-fuzz-all/fuzzing"
 	"reflect"
 	"testing"
 )
 
-func Fuzz2[T any](f fuzzing.TestingF, fn func(*testing.T, T)) {
+func Fuzz[T any](f TestingF, fn func(*testing.T, T)) {
 	tType := reflect.TypeFor[T]()
 	in := []reflect.Type{
 		reflect.TypeFor[*testing.T](),

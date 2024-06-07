@@ -1,12 +1,11 @@
-package fuzzing2
+package fuzzing
 
 import (
 	"fmt"
-	"github.com/hugoklepsch/go-fuzz-all/fuzzing"
 	"reflect"
 )
 
-func Add2[T any](f fuzzing.TestingF, t T) {
+func Add[T any](f TestingF, t T) {
 	tValue := reflect.ValueOf(t)
 
 	fieldsTraverser := anyToFieldsTraverser{}

@@ -6,16 +6,6 @@ import (
 	"unicode/utf8"
 )
 
-func FunctionToTestBasicTypes(s string) bool {
-	return utf8.ValidString(s)
-}
-
-func FuzzFunctionToTestBasicTypes(f *testing.F) {
-	f.Fuzz(func(t *testing.T, s string) {
-		FunctionToTestBasicTypes(s)
-	})
-}
-
 type MyStruct struct {
 	S string
 	B bool
@@ -29,29 +19,39 @@ func FunctionToTestWithPanicBug(m MyStruct) {
 	}
 }
 
-func FuzzFunctionToTestStruct_NotWorking(f *testing.F) {
+func FuzzFunctionToTestWithPanicBug_NotWorking(f *testing.F) {
 	// Does not work:
 	// panic: testing: unsupported type for fuzzing examples.MyStruct
-	f.Fuzz(func(t *testing.T, m MyStruct) {
-		FunctionToTestWithPanicBug(m)
-	})
+	/*
+		f.Fuzz(func(t *testing.T, m MyStruct) {
+			FunctionToTestWithPanicBug(m)
+		})
+	*/
+	f.Skip()
 }
 
-func FuzzFunctionToTestStruct_NotWorking2(f *testing.F) {
+func FuzzFunctionToTestWithPanicBug_NotWorking2(f *testing.F) {
 	// Does not work:
 	// panic: testing: unsupported type for fuzzing []interface {}
-	f.Add("foo", false, 42, 42.0)
-	f.Fuzz(func(t *testing.T, args ...any) {
-		FunctionToTestWithPanicBug(MyStruct{S: args[0].(string), B: args[1].(bool), I: args[2].(int), F: args[3].(float64)})
-	})
+	/*
+		f.Add("foo", false, 42, 42.0)
+		f.Fuzz(func(t *testing.T, args ...any) {
+			FunctionToTestWithPanicBug(MyStruct{S: args[0].(string), B: args[1].(bool), I: args[2].(int), F: args[3].(float64)})
+		})
+	*/
+	f.Skip()
 }
 
-func FuzzFunctionToTestStruct_GeneratedFuzzTarget(f *testing.F) {
+// Solution: Use go-fuzz-any to fuzz Go structs directly.
+func FuzzFunctionToTestWithPanicBug_Working(f *testing.F) {
 	ex1 := MyStruct{I: 42}
 	ex2 := MyStruct{F: 42.0}
+	// Works!
+	// Add examples to the fuzz corpus
 	fuzzing.Add(f, ex1)
 	fuzzing.Add(f, ex2)
-	fuzzing.Fuzz[MyStruct](f, func(t *testing.T, m MyStruct) {
+	// Begin fuzzing
+	fuzzing.Fuzz(f, func(t *testing.T, m MyStruct) {
 		t.Logf("%v", m)
 		FunctionToTestWithPanicBug(m)
 	})

@@ -1,4 +1,4 @@
-package fuzzing2
+package fuzzing
 
 import (
 	"github.com/hugoklepsch/go-fuzz-all/internal/mocks"
@@ -20,7 +20,7 @@ func TestFuzz2Struct_NoNesting_NoPtrs(t *testing.T) {
 		F float64
 	}
 	mockF.EXPECT().Fuzz(gomock.AssignableToTypeOf(func(t *testing.T, s string, b bool, i int, f float64) {}))
-	Fuzz2(mockF, func(t *testing.T, foo Foo) {})
+	Fuzz(mockF, func(t *testing.T, foo Foo) {})
 }
 
 func TestFuzz2Struct_NoNesting_Ptrs(t *testing.T) {
@@ -37,7 +37,7 @@ func TestFuzz2Struct_NoNesting_Ptrs(t *testing.T) {
 	mockF.EXPECT().Fuzz(gomock.AssignableToTypeOf(
 		func(t *testing.T, b1 bool, s1 string, b2, b3, b4 bool, i1 int, b5 bool, f1 float64) {}),
 	)
-	Fuzz2(mockF, func(t *testing.T, foo Foo) {})
+	Fuzz(mockF, func(t *testing.T, foo Foo) {})
 }
 
 func TestFuzz2Struct_NoNesting_PtrsWithNil(t *testing.T) {
@@ -55,7 +55,7 @@ func TestFuzz2Struct_NoNesting_PtrsWithNil(t *testing.T) {
 
 	mockF.EXPECT().Add(false, "", false, false, false, 0, false, 0.0)
 
-	Add2(mockF, f1)
+	Add(mockF, f1)
 }
 
 func TestFuzz2Struct_Nesting_PtrsWithNil(t *testing.T) {
@@ -83,7 +83,7 @@ func TestFuzz2Struct_Nesting_PtrsWithNil(t *testing.T) {
 		false, 0.0,
 		true, true, float32(3.14), true, complex64(12))
 
-	Add2(mockF, f1)
+	Add(mockF, f1)
 }
 
 func TestBuildAnyTraverser_NoNesting_NoPts(t *testing.T) {
